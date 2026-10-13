@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookingsPlace Simple CRM App</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #f4f7f6; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, button { display: block; width: 100%; margin-bottom: 10px; padding: 10px; box-sizing: border-box; }
+        button { background: #0070f3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #0051a2; }
+        pre { background: #eee; padding: 10px; border-radius: 4px; overflow-x: auto; max-height: 200px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="login-section">
+        <h2>1. Login to BookingsPlace</h2>
+        <input type="email" id="email" placeholder="Enter your email" value="">
+        <input type="password" id="password" placeholder="Enter your password">
+        <button onclick="loginUser()">Login & Get Token</button>
+    </div>
+
+    <div class="card hidden" id="dashboard-section">
+        <h2>2. Fetch Data</h2>
+        <p>Logged in successfully! Token acquired.</p>
+        <button onclick="fetchMyBookings()">Check My Bookings</button>
+        <button onclick="fetchMyListings()">Check My Services / Listings</button>
+        
+        <h3>API Output Response:</h3>
+        <pre id="output">Click a button above to load data...</pre>
+    </div>
+
+    <script>
+        const API_BASE = "https://api.bookingsplace.online/api";
+        let authToken = "";
+
+        async function loginUser() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            const output = document.getElementById("output");
+
+            output.textContent = "Logging in...";
+
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Extract token (Laravel Sanctum standard response usually stores it in data.token or data.access_token)
+                    authToken = data.data.token || data.token;
+                    
+                    output.textContent = "Login Successful! Token saved.";
+                    
+                    // Switch views
+                    document.getElementById("login-section").classList.add("hidden");
+                    document.getElementById("dashboard-section").classList.remove("hidden");
+                } else {
+                    output.textContent = "Login Failed: " + JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                output.textContent = "Network Error: " + error.message;
+            }
+        }
+
+        async function fetchMyBookings() {
+            const output = document.getElementById("output");
+            output.textContent = "Fetching bookings...";
+
+            try {
+                // Adjust endpoint based on whether you are fetching customer bookings or vendor bookings
+                const response = await fetch(`${API_BASE}/vendor/bookings`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${authToken}`,
+                        "Accept": "application/json"
+                    }
+                });
+
+                const data = await response.json();
+                output.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.textContent = "Error fetching bookings: " + error.message;
+            }
+        }
+
+        async function fetchMyListings() {
+            const output = document.getElementById("output");
+            output.textContent = "Fetching services/listings...";
+
+            try {
+                const response = await fetch(`${API_BASE}/listings`, {
+                    method: "GET",
+                    headers: {
+                        "Accept": "application/json"
+                        // Note: /listings is public, so Authorization header is optional here, 
+                        // but you can pass it if looking up specific owner items.
+                    }
+                });
+
+                const data = await response.json();
+                output.textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                output.textContent = "Error fetching listings: " + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
