@@ -103,8 +103,8 @@
             messageDiv.textContent = 'Logging in...';
 
             try {
-                // Using the relative path /api/login which routes securely through Vercel's proxy
-                const response = await fetch('/api/login', {
+                // Updated to match the backend documentation path: /api/auth/login
+                const response = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -117,9 +117,12 @@
 
                 if (response.ok) {
                     messageDiv.style.color = 'green';
-                    messageDiv.innerHTML = `<strong>Success! Token:</strong> <br>${data.token || JSON.stringify(data)}`;
+                    // Based on the docs, the token is nested inside data.data.token
+                    const token = data.data?.token || data.token;
+                    messageDiv.innerHTML = `<strong>Success! Token:</strong> <br>${token || JSON.stringify(data)}`;
+
                     // Save token for subsequent requests if needed:
-                    // localStorage.setItem('auth_token', data.token);
+                    // localStorage.setItem('auth_token', token);
                 } else {
                     messageDiv.style.color = 'red';
                     messageDiv.textContent = `Error: ${data.message || 'Invalid credentials'}`;

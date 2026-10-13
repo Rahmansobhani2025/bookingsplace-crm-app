@@ -1,8 +1,8 @@
 {
     "rewrites": [
         {
-            "source": "/api/(.*)",
-            "destination": "https://api.bookingsplace.online/api/$1"
+            "source": "/api/:path*",
+            "destination": "https://api.bookingsplace.online/api/:path*"
         }
     ]
 }
