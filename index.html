@@ -1,119 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BookingsPlace Simple CRM App</title>
+    <title>BookingsPlace CRM - Login</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #f4f7f6; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, button { display: block; width: 100%; margin-bottom: 10px; padding: 10px; box-sizing: border-box; }
-        button { background: #0070f3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #0051a2; }
-        pre { background: #eee; padding: 10px; border-radius: 4px; overflow-x: auto; max-height: 200px; }
-        .hidden { display: none; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #0070f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0051d5;
+        }
+
+        #response-message {
+            margin-top: 15px;
+            font-size: 14px;
+            word-break: break-all;
+        }
     </style>
 </head>
+
 <body>
 
-    <div class="card" id="login-section">
+    <div class="login-card">
         <h2>1. Login to BookingsPlace</h2>
-        <input type="email" id="email" placeholder="Enter your email" value="">
-        <input type="password" id="password" placeholder="Enter your password">
-        <button onclick="loginUser()">Login & Get Token</button>
-    </div>
-
-    <div class="card hidden" id="dashboard-section">
-        <h2>2. Fetch Data</h2>
-        <p>Logged in successfully! Token acquired.</p>
-        <button onclick="fetchMyBookings()">Check My Bookings</button>
-        <button onclick="fetchMyListings()">Check My Services / Listings</button>
-        
-        <h3>API Output Response:</h3>
-        <pre id="output">Click a button above to load data...</pre>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" value="envision2023e@gmail.com" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit">Login & Get Token</button>
+        </form>
+        <div id="response-message"></div>
     </div>
 
     <script>
-        const API_BASE = "https://api.bookingsplace.online/api";
-        let authToken = "";
+        document.getElementById('login-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
 
-        async function loginUser() {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-            const output = document.getElementById("output");
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('response-message');
 
-            output.textContent = "Logging in...";
+            messageDiv.style.color = '#333';
+            messageDiv.textContent = 'Logging in...';
 
             try {
-                const response = await fetch(`${API_BASE}/login`, {
-                    method: "POST",
+                // Using the relative path /api/login which routes securely through Vercel's proxy
+                const response = await fetch('/api/login', {
+                    method: 'POST',
                     headers: {
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify({ email, password })
                 });
 
                 const data = await response.json();
 
-                if (response.ok && data.success) {
-                    // Extract token (Laravel Sanctum standard response usually stores it in data.token or data.access_token)
-                    authToken = data.data.token || data.token;
-                    
-                    output.textContent = "Login Successful! Token saved.";
-                    
-                    // Switch views
-                    document.getElementById("login-section").classList.add("hidden");
-                    document.getElementById("dashboard-section").classList.remove("hidden");
+                if (response.ok) {
+                    messageDiv.style.color = 'green';
+                    messageDiv.innerHTML = `<strong>Success! Token:</strong> <br>${data.token || JSON.stringify(data)}`;
+                    // Save token for subsequent requests if needed:
+                    // localStorage.setItem('auth_token', data.token);
                 } else {
-                    output.textContent = "Login Failed: " + JSON.stringify(data, null, 2);
+                    messageDiv.style.color = 'red';
+                    messageDiv.textContent = `Error: ${data.message || 'Invalid credentials'}`;
                 }
             } catch (error) {
-                output.textContent = "Network Error: " + error.message;
+                messageDiv.style.color = 'red';
+                messageDiv.textContent = `Network Error: ${error.message}`;
             }
-        }
-
-        async function fetchMyBookings() {
-            const output = document.getElementById("output");
-            output.textContent = "Fetching bookings...";
-
-            try {
-                // Adjust endpoint based on whether you are fetching customer bookings or vendor bookings
-                const response = await fetch(`${API_BASE}/vendor/bookings`, {
-                    method: "GET",
-                    headers: {
-                        "Authorization": `Bearer ${authToken}`,
-                        "Accept": "application/json"
-                    }
-                });
-
-                const data = await response.json();
-                output.textContent = JSON.stringify(data, null, 2);
-            } catch (error) {
-                output.textContent = "Error fetching bookings: " + error.message;
-            }
-        }
-
-        async function fetchMyListings() {
-            const output = document.getElementById("output");
-            output.textContent = "Fetching services/listings...";
-
-            try {
-                const response = await fetch(`${API_BASE}/listings`, {
-                    method: "GET",
-                    headers: {
-                        "Accept": "application/json"
-                        // Note: /listings is public, so Authorization header is optional here, 
-                        // but you can pass it if looking up specific owner items.
-                    }
-                });
-
-                const data = await response.json();
-                output.textContent = JSON.stringify(data, null, 2);
-            } catch (error) {
-                output.textContent = "Error fetching listings: " + error.message;
-            }
-        }
+        });
     </script>
 </body>
+
 </html>
